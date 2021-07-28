@@ -25,14 +25,14 @@ def 時間表示(dt: Optional[datetime], date: Optional[datetime.date]) -> str:
     if dt:
         date = dt.date()
         if today == date:
-            return f"【本日】 {today} {dt.hour:02}:{dt.minute:02} から -- "
+            return f"【本日】 {today} {dt.hour:02}:{dt.minute:02}  -- "
         else:
-            return f"【明日】 {today + timedelta(days=1)} {dt.hour:02}:{dt.minute:02} から --"
+            return f"【明日】 {today + timedelta(days=1)} {dt.hour:02}:{dt.minute:02}  -- "
     else:
         if today == date:
-            return f"【本日】 {today}  -- "
+            return f"【本日】 {today}        -- "
         else:
-            return f"【明日】 {today}  -- "
+            return f"【明日】 {today}        -- "
 
 def main():
     """Shows basic usage of the Google Calendar API.
@@ -73,7 +73,6 @@ def main():
     now = converted.utcnow().isoformat() + "Z"  # 'Z' indicates UTC time
 
 
-    print("Getting the upcoming 10 events")
     events_result = (
         service.events()
         .list(
@@ -92,24 +91,17 @@ def main():
     if not events:
         print("No upcoming events found.")
     for event in events:
-        # start = event["start"].get("dateTime", event["start"].get("date"))
-        # start = event["start"].get("dateTime", event["start"].get("date")) # if 文みたいなものか
         start_datetime = event["start"].get("dateTime")
         start_date = event["start"].get("date")
-        # print(f"{start_datetime}, {start_date}")
 
         if start_datetime:
             sdt_obj_parsed = datetime.strptime(start_datetime, '%Y-%m-%dT%H:%M:%S%z')
         else:
             sdt_obj_parsed = None
             start_date2 = datetime.strptime(start_date, "%Y-%m-%d").date()
-        # print(f"{start_datetime}, {start_date}, {sdt_obj_parsed}")
         時間 = 時間表示(sdt_obj_parsed, start_date2)
 
         print(f"{時間} {event['summary']}")
-
-        # print(start, event["summary"], event["description"], type(start), type(event["summary"]))
-        # print(start_date, start, event["summary"], type(start), type(event["summary"]))
 
 
 if __name__ == "__main__":
