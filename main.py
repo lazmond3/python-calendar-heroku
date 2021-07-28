@@ -128,8 +128,59 @@ def main():
     #     with open("token.pickle", "wb") as token:
     #         pickle.dump(creds, token)
 
+@app.route("/callback", methods=["POST"])
+def callback():
+    # get X-Line-Signature header value
+    signature = request.headers["X-Line-Signature"]
 
- 
+    # get request body as text
+    body = request.get_data(as_text=True)
+    app.logger.info("Request body: " + body)
 
+    # handle webhook body
+    try:
+        handler.handle(body, signature)
+    except InvalidSignatureError:
+        print(
+            "Invalid signature. Please check your channel access token/channel secret."
+        )
+        abort(400)
+
+    return "OK"
+
+
+@app.route("/")
+def hello():
+    str_out = ""
+    str_out += "<h2>Hello from Python!</h2>"
+    str_out += "<blockquote>"
+    str_out += "こんにちは<p />"
+    str_out += "</blockquote>"
+    str_out += "Aug/07/2017 PM 12:49<br />"
+    return str_out
+
+@app.route("/send")
+def send():
+    result:str = calendar_str()
+    line_bot_api.push_message(RYO_UID, TextMessage(text=result))
+    return result
+
+@handler.add(MessageEvent, message=TextMessage)
+def handle_message(event):
+    text = event.message.text
+    user_id = event.source.user_id
+    now_timestamp: int = int(datetime.now().timestamp())
+
+    print(f"user id: {event.source.user_id}")
+    print(f"time: {now_timestamp}, text: {text}, user_id: {user_id}")
+
+    line_bot_api.reply_message(
+        event.reply_token, TextMessage(text=f"time: {now_timestamp}, text: {text}, user_id: {user_id}")
+    )
+    
+
+
+# if __name__ == "__main__":
 if __name__ == "__main__":
-    main()
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
