@@ -1,18 +1,19 @@
 from __future__ import print_function
 
 import os
+import sys
 from datetime import datetime, timedelta, timezone
-from typing import Optional, List
+from typing import List, Optional
 
+from flask import Flask, abort, request, send_from_directory
 from google.auth.transport.requests import Request
 from google.oauth2 import service_account
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
-
-from flask import Flask, request, abort, send_from_directory
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
-from linebot.models import MessageEvent, TextMessage, TextSendMessage, ImageSendMessage
+from linebot.models import (ImageSendMessage, MessageEvent, TextMessage,
+                            TextSendMessage)
 
 app = Flask(__name__)
 line_bot_api = LineBotApi(os.getenv("LINE_BOT_CHANNEL_ACCESS_TOKEN"))
@@ -33,24 +34,35 @@ with open("credentials.json", "w") as f:
 creds = service_account.Credentials.from_service_account_file("credentials.json")
 
 
-def 時間表示(dt: Optional[datetime], date: Optional[datetime.date]) -> str:
+def 時間表示(
+    start_dt: Optional[datetime],
+    start_date: Optional[datetime.date],
+    end_dt: Optional[datetime],
+    end_date: Optional[datetime.date],
+) -> str:
     now = datetime.now(JST)
     today = datetime(now.year, now.month, now.day, tzinfo=JST).date()
 
-    if dt:
-        date = dt.date()
-        if today == date:
-            return f"【本日】 {today} {dt.hour:02}:{dt.minute:02}  -- "
+    if start_dt:
+        start_date = start_dt.date()
+        if today == start_date:
+            return f"【本日】 {today} {start_dt.hour:02}:{start_dt.minute:02} - {end_dt.hour:02}:{end_dt.minute:02}"
+        elif today + timedelta(days=1) == start_date:
+            return f"【明日】 {today + timedelta(days=1)} {start_dt.hour:02}:{start_dt.minute:02} - {end_dt.hour:02}:{end_dt.minute:02}"
         else:
-            return f"【明日】 {today + timedelta(days=1)} {dt.hour:02}:{dt.minute:02}  -- "
+            return f"{start_date} {start_dt.hour:02}:{start_dt.minute:02} - {end_dt.hour:02}:{end_dt.minute:02}"
     else:
-        if today == date:
-            return f"【本日】 {today}        -- "
-        else:
-            return f"【明日】 {today}        -- "
+        if today == start_date:
+            date_result = f"【本日】 {today}"
+        elif today + timedelta(days=1) == start_date:
+            date_result = f"【明日】 {today}"
+
+        if today + timedelta(days=1) != end_date:
+            date_result += f" - {end_date}"
+        return date_result
 
 
-def calendar_str() -> str:
+def calendar_str() -> List[str]:
     service = build("calendar", "v3", credentials=creds)
     # Call the Calendar API
     UTC = timezone(timedelta(hours=0), "UTC")
@@ -84,20 +96,36 @@ def calendar_str() -> str:
     if not events:
         print("No upcoming events found.")
     result: List[str] = []
+    result_明日: List[str] = []
     for event in events:
-        start_datetime = event["start"].get("dateTime")
-        start_date = event["start"].get("date")
+        print(event)
+        start_datetime_str: Optional[str] = event["start"].get("dateTime")
+        start_date_str: Optional[str] = event["start"].get("date")
+        end_datetime_str: Optional[str] = event["end"].get("dateTime")
+        end_date_str: Optional[str] = event["end"].get("date")
 
-        if start_datetime:
-            sdt_obj_parsed = datetime.strptime(start_datetime, "%Y-%m-%dT%H:%M:%S%z")
+        if start_datetime_str:
+            start_dt = datetime.strptime(start_datetime_str, "%Y-%m-%dT%H:%M:%S%z")
+            end_dt = datetime.strptime(end_datetime_str, "%Y-%m-%dT%H:%M:%S%z")
+            start_date = None
+            end_date = None
         else:
-            sdt_obj_parsed = None
-            start_date2 = datetime.strptime(start_date, "%Y-%m-%d").date()
-        時間 = 時間表示(sdt_obj_parsed, start_date2)
+            start_dt = None
+            end_dt = None
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
 
-        # print()
-        result.append(f"{時間} {event['summary']}")
-    return "\n".join(result)
+        時間 = 時間表示(start_dt, start_date, end_dt, end_date)
+        target_string: str = f"{時間}\n\t{event['summary']}"
+        if "【明日】" in 時間:
+            result_明日.append(target_string)
+        else:
+            result.append(target_string)
+
+    for r in result:
+        result_明日.append(r)
+    return result_明日
+
 
 def main():
     """Shows basic usage of the Google Calendar API.
@@ -127,6 +155,7 @@ def main():
     #     # Save the credentials for the next run
     #     with open("token.pickle", "wb") as token:
     #         pickle.dump(creds, token)
+
 
 @app.route("/callback", methods=["POST"])
 def callback():
@@ -159,11 +188,14 @@ def hello():
     str_out += "Aug/07/2017 PM 12:49<br />"
     return str_out
 
+
 @app.route("/send")
 def send():
-    result:str = calendar_str()
-    line_bot_api.push_message(RYO_UID, TextMessage(text=result))
-    return result
+    result: List[str] = calendar_str()
+    for r in result:
+        line_bot_api.push_message(RYO_UID, TextMessage(text=r))
+    return ""
+
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
@@ -175,12 +207,14 @@ def handle_message(event):
     print(f"time: {now_timestamp}, text: {text}, user_id: {user_id}")
 
     line_bot_api.reply_message(
-        event.reply_token, TextMessage(text=f"time: {now_timestamp}, text: {text}, user_id: {user_id}")
+        event.reply_token,
+        TextMessage(text=f"time: {now_timestamp}, text: {text}, user_id: {user_id}"),
     )
-    
 
 
-# if __name__ == "__main__":
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    if len(sys.argv) >= 2:
+        main()
+    else:
+        port = int(os.environ.get("PORT", 5000))
+        app.run(host="0.0.0.0", port=port)
