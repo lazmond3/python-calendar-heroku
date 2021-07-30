@@ -46,14 +46,16 @@ def 時間表示(
     if start_dt:
         start_date = start_dt.date()
         if today == start_date:
-            return f"【本日】 {start_dt.hour:02}:{start_dt.minute:02} - {end_dt.hour:02}:{end_dt.minute:02}"
+            # return f"【本日】 {start_dt.hour:02}:{start_dt.minute:02} - {end_dt.hour:02}:{end_dt.minute:02}"
+            return f" {start_dt.hour:02}:{start_dt.minute:02} - {end_dt.hour:02}:{end_dt.minute:02}"
         elif today + timedelta(days=1) == start_date:
             return f"【明日】 {start_dt.hour:02}:{start_dt.minute:02} - {end_dt.hour:02}:{end_dt.minute:02}"
         else:
             return f"{start_date} {start_dt.hour:02}:{start_dt.minute:02} - {end_dt.hour:02}:{end_dt.minute:02}"
     else:
         if today == start_date:
-            date_result = f"【本日】 "
+            # date_result = f"【本日】 "
+            pass
         elif today + timedelta(days=1) == start_date:
             date_result = f"【明日】 "
 
