@@ -46,19 +46,19 @@ def 時間表示(
     if start_dt:
         start_date = start_dt.date()
         if today == start_date:
-            return f"【本日】 {today} {start_dt.hour:02}:{start_dt.minute:02} - {end_dt.hour:02}:{end_dt.minute:02}"
+            return f"【本日】 {start_dt.hour:02}:{start_dt.minute:02} - {end_dt.hour:02}:{end_dt.minute:02}"
         elif today + timedelta(days=1) == start_date:
-            return f"【明日】 {today + timedelta(days=1)} {start_dt.hour:02}:{start_dt.minute:02} - {end_dt.hour:02}:{end_dt.minute:02}"
+            return f"【明日】 {start_dt.hour:02}:{start_dt.minute:02} - {end_dt.hour:02}:{end_dt.minute:02}"
         else:
             return f"{start_date} {start_dt.hour:02}:{start_dt.minute:02} - {end_dt.hour:02}:{end_dt.minute:02}"
     else:
         if today == start_date:
-            date_result = f"【本日】 {today}"
+            date_result = f"【本日】 "
         elif today + timedelta(days=1) == start_date:
-            date_result = f"【明日】 {today}"
+            date_result = f"【明日】 "
 
-        if today + timedelta(days=1) != end_date:
-            date_result += f" - {end_date}"
+        # if today + timedelta(days=1) != end_date:
+        #     date_result += f" - {end_date}"
         return date_result
 
 
@@ -192,24 +192,27 @@ def hello():
 @app.route("/send")
 def send():
     result: List[str] = calendar_str()
+    now = datetime.now(JST)
+    today = datetime(now.year, now.month, now.day, tzinfo=JST).date()
+    line_bot_api.push_message(RYO_UID, TextMessage(text=f"今日の日付: {today}"))
     for r in result:
         line_bot_api.push_message(RYO_UID, TextMessage(text=r))
     return ""
 
 
-@handler.add(MessageEvent, message=TextMessage)
-def handle_message(event):
-    text = event.message.text
-    user_id = event.source.user_id
-    now_timestamp: int = int(datetime.now().timestamp())
+# @handler.add(MessageEvent, message=TextMessage)
+# def handle_message(event):
+#     text = event.message.text
+#     user_id = event.source.user_id
+#     now_timestamp: int = int(datetime.now().timestamp())
 
-    print(f"user id: {event.source.user_id}")
-    print(f"time: {now_timestamp}, text: {text}, user_id: {user_id}")
+#     print(f"user id: {event.source.user_id}")
+#     print(f"time: {now_timestamp}, text: {text}, user_id: {user_id}")
 
-    line_bot_api.reply_message(
-        event.reply_token,
-        TextMessage(text=f"time: {now_timestamp}, text: {text}, user_id: {user_id}"),
-    )
+    # line_bot_api.reply_message(
+    #     event.reply_token,
+    #     TextMessage(text=f"time: {now_timestamp}, text: {text}, user_id: {user_id}"),
+    # )
 
 
 if __name__ == "__main__":
