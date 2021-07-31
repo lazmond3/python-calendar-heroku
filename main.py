@@ -12,8 +12,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
-from linebot.models import (ImageSendMessage, MessageEvent, TextMessage,
-                            TextSendMessage)
+from linebot.models import ImageSendMessage, MessageEvent, TextMessage, TextSendMessage
 
 app = Flask(__name__)
 line_bot_api = LineBotApi(os.getenv("LINE_BOT_CHANNEL_ACCESS_TOKEN"))
@@ -47,17 +46,17 @@ def 時間表示(
         start_date = start_dt.date()
         if today == start_date:
             # return f"【本日】 {start_dt.hour:02}:{start_dt.minute:02} - {end_dt.hour:02}:{end_dt.minute:02}"
-            return f" {start_dt.hour:02}:{start_dt.minute:02} - {end_dt.hour:02}:{end_dt.minute:02}"
+            return f" {start_dt.hour:02}:{start_dt.minute:02} - {end_dt.hour:02}:{end_dt.minute:02}\n"
         elif today + timedelta(days=1) == start_date:
-            return f"【明日】 {start_dt.hour:02}:{start_dt.minute:02} - {end_dt.hour:02}:{end_dt.minute:02}"
+            return f"【明日】 {start_dt.hour:02}:{start_dt.minute:02} - {end_dt.hour:02}:{end_dt.minute:02}\n"
         else:
-            return f"{start_date} {start_dt.hour:02}:{start_dt.minute:02} - {end_dt.hour:02}:{end_dt.minute:02}"
+            return f"{start_date} {start_dt.hour:02}:{start_dt.minute:02} - {end_dt.hour:02}:{end_dt.minute:02}\n"
     else:
         if today == start_date:
             # date_result = f"【本日】 "
             pass
         elif today + timedelta(days=1) == start_date:
-            date_result = f"【明日】 "
+            date_result = f"【明日】 \n"
 
         # if today + timedelta(days=1) != end_date:
         #     date_result += f" - {end_date}"
@@ -118,7 +117,10 @@ def calendar_str() -> List[str]:
             end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
 
         時間 = 時間表示(start_dt, start_date, end_dt, end_date)
-        target_string: str = f"{時間}\n\t{event['summary']}"
+        if len(時間) != 0:
+            target_string: str = f"{時間}\t{event['summary']}"
+        else:
+            target_string: str = f"{event['summary']}"
         if "【明日】" in 時間:
             result_明日.append(target_string)
         else:
@@ -211,10 +213,10 @@ def send():
 #     print(f"user id: {event.source.user_id}")
 #     print(f"time: {now_timestamp}, text: {text}, user_id: {user_id}")
 
-    # line_bot_api.reply_message(
-    #     event.reply_token,
-    #     TextMessage(text=f"time: {now_timestamp}, text: {text}, user_id: {user_id}"),
-    # )
+# line_bot_api.reply_message(
+#     event.reply_token,
+#     TextMessage(text=f"time: {now_timestamp}, text: {text}, user_id: {user_id}"),
+# )
 
 
 if __name__ == "__main__":
