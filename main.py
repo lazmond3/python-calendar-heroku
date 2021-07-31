@@ -139,60 +139,6 @@ def main():
     str_ = calendar_str()
     print(str_)
 
-    # creds = None
-    # The file token.pickle stores the user's access and refresh tokens, and is
-    # created automatically when the authorization flow completes for the first
-    # time.
-    # if os.path.exists("token.pickle"):
-    #     with open("token.pickle", "rb") as token:
-    #         creds = pickle.load(token)
-    #         print(creds)
-    #     exit(0)
-    # If there are no (valid) credentials available, let the user log in.
-
-    # if not creds or not creds.valid:
-    #     if creds and creds.expired and creds.refresh_token:
-    #         creds.refresh(Request())
-    #     else:
-    #         flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
-    #         creds = flow.run_local_server(port=0)
-    #     # Save the credentials for the next run
-    #     with open("token.pickle", "wb") as token:
-    #         pickle.dump(creds, token)
-
-
-@app.route("/callback", methods=["POST"])
-def callback():
-    # get X-Line-Signature header value
-    signature = request.headers["X-Line-Signature"]
-
-    # get request body as text
-    body = request.get_data(as_text=True)
-    app.logger.info("Request body: " + body)
-
-    # handle webhook body
-    try:
-        handler.handle(body, signature)
-    except InvalidSignatureError:
-        print(
-            "Invalid signature. Please check your channel access token/channel secret."
-        )
-        abort(400)
-
-    return "OK"
-
-
-@app.route("/")
-def hello():
-    str_out = ""
-    str_out += "<h2>Hello from Python!</h2>"
-    str_out += "<blockquote>"
-    str_out += "こんにちは<p />"
-    str_out += "</blockquote>"
-    str_out += "Aug/07/2017 PM 12:49<br />"
-    return str_out
-
-
 @app.route("/send")
 def send():
     result: List[str] = calendar_str()
@@ -202,21 +148,6 @@ def send():
     for r in result:
         line_bot_api.push_message(RYO_UID, TextMessage(text=r))
     return ""
-
-
-# @handler.add(MessageEvent, message=TextMessage)
-# def handle_message(event):
-#     text = event.message.text
-#     user_id = event.source.user_id
-#     now_timestamp: int = int(datetime.now().timestamp())
-
-#     print(f"user id: {event.source.user_id}")
-#     print(f"time: {now_timestamp}, text: {text}, user_id: {user_id}")
-
-# line_bot_api.reply_message(
-#     event.reply_token,
-#     TextMessage(text=f"time: {now_timestamp}, text: {text}, user_id: {user_id}"),
-# )
 
 
 if __name__ == "__main__":
