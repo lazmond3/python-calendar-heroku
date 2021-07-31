@@ -42,7 +42,7 @@ def 時間表示(
 ) -> str:
     now = datetime.now(JST)
     today = datetime(now.year, now.month, now.day, tzinfo=JST).date()
-
+    date_result = ""
     if start_dt:
         start_date = start_dt.date()
         if today == start_date:
