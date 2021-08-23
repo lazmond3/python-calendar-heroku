@@ -44,3 +44,31 @@ resource "aws_lambda_layer_version" "lambda_layer" {
   filename   = "${data.archive_file.layer_zip.output_path}"
   source_code_hash = "${data.archive_file.layer_zip.output_base64sha256}"
 }
+
+## logs
+# CloudWatch Logs
+resource "aws_cloudwatch_log_group" "log_group" {
+  name              = "/aws/lambda/${var.app_name}"
+  retention_in_days = 14
+
+  tags = {
+    Name        = var.app_name
+    CreateOwner = "Terraform"
+  }
+}
+
+
+module "cloudwatch_evnet" {
+  source     = "./modules/cloudwatch"
+  name       = var.app_name
+  schedule   = "cron(0 20 ? * * *)"
+  lambda_arn = aws_lambda_function.pylib_google.arn
+}
+
+resource "aws_lambda_permission" "allow_cloudwatch" {
+  statement_id  = "AllowExecutionFromCloudWatch"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.pylib_google.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = module.cloudwatch_evnet.rule_arn
+}
