@@ -27,10 +27,10 @@ SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"]
 JST = timezone(timedelta(hours=+9), "JST")
 RYO_UID = os.getenv("RYO_UID")  # ryo の UID
 
-with open("credentials.json", "w") as f:
+with open("/tmp/credentials.json", "w") as f:
     f.write(os.getenv("G_SECRET"))
 
-creds = service_account.Credentials.from_service_account_file("credentials.json")
+creds = service_account.Credentials.from_service_account_file("/tmp/credentials.json")
 
 
 def 時間表示(
