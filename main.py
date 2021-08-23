@@ -139,6 +139,15 @@ def main():
     str_ = calendar_str()
     print(str_)
 
+def lambda_handler(a1, a2):
+    result: List[str] = calendar_str()
+    now = datetime.now(JST)
+    today = datetime(now.year, now.month, now.day, tzinfo=JST).date()
+    line_bot_api.push_message(RYO_UID, TextMessage(text=f"今日の日付: {today}"))
+    for r in result:
+        line_bot_api.push_message(RYO_UID, TextMessage(text=r))
+
+
 @app.route("/send")
 def send():
     result: List[str] = calendar_str()
