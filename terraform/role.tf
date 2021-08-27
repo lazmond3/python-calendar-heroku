@@ -23,7 +23,7 @@ POLICY
 # Policy
 resource "aws_iam_role_policy" "lambda_access_policy" {
   name   = "${var.app_name}_lambda_access_policy"
-  role   = "${aws_iam_role.lambda_iam_role.id}"
+  role   = aws_iam_role.lambda_iam_role.id
   policy = <<POLICY
 {
   "Version": "2012-10-17",
