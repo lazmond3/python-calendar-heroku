@@ -10,27 +10,27 @@ jobs:
     if: ${{ github.event.issue.pull_request != null && github.event.comment.body == '.deploy' }}
     steps:
       # ここで checkout する。
-      - uses: lazmond3/actions-checkout-pr@v1.2
+      - uses: lazmond3/actions-checkout-pr@v1.3
         id: get-pr
 
-      # 最新コミットの取得 -> コメント: github actions の URL
-      # - uses: actions/github-script@0.9.0
-      #   with:
-      #     github-token: ${{ secrets.GITHUB_TOKEN }}
-      #     script: |
-      #       const commitHash = `${{ fromJSON(steps.get-pr.outputs.result).head.sha }}`;
-      #       const substrCommitHash = commitHash.substr(0,7);
+      最新コミットの取得 -> コメント: github actions の URL
+      - uses: actions/github-script@0.9.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const commitHash = `${{ fromJSON(steps.get-pr.outputs.result).head.sha }}`;
+            const substrCommitHash = commitHash.substr(0,7);
 
-      #       const output = `#### start docker build.... ${substrCommitHash}
-      #       CI URL: ${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}
-      #       `;
+            const output = `#### start docker build.... ${substrCommitHash}
+            CI URL: ${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}
+            `;
 
-      #       github.issues.createComment({
-      #         issue_number: context.issue.number,
-      #         owner: context.repo.owner,
-      #         repo: context.repo.repo,
-      #         body: output
-      #       })
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
 
       - name: Configure AWS credentials from Test account
         uses: aws-actions/configure-aws-credentials@v1
@@ -94,7 +94,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const commitHash = `${{ fromJSON(steps.get-pr2nd.outputs.result).head.sha }}`;
+            const commitHash = `${{ fromJSON(steps.get-pr.outputs.result).head.sha }}`;
             const substrCommitHash = commitHash.substr(0,7);
             const output = `#### .deploy の結果を表示する。 ${substrCommitHash}
             #### Terraform apply 📖\`${{ steps.apply.outcome }}\`
