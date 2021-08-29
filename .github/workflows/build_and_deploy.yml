@@ -57,10 +57,12 @@ jobs:
       - name: Terraform Init
         id: init
         run: terraform init
+        working-directory: ./terraform
 
       - name: Terraform Plan
         id: plan
         run: terraform plan -no-color
+        working-directory: ./terraform
         env:
           TF_VAR_G_SECRET: ${{ secrets.TF_VAR_G_SECRET }}
           TF_VAR_CALENDAR_ID: ${{ secrets.TF_VAR_CALENDAR_ID }}
@@ -75,6 +77,7 @@ jobs:
 
       - name: Terraform Apply
         id: apply
+        working-directory: ./terraform
         run: terraform apply -no-color -auto-approve
         env:
           TF_VAR_G_SECRET: ${{ secrets.TF_VAR_G_SECRET }}
