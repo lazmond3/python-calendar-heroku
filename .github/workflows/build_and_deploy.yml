@@ -1,0 +1,168 @@
+name: "build and deploy"
+on:
+  issue_comment:
+
+jobs:
+
+  build:
+    name: "deploy"
+    runs-on: ubuntu-latest
+    if: ${{ github.event.issue.pull_request != null && github.event.comment.body == '.deploy' }}
+    steps:
+     # ここで checkout する。
+      - uses: lazmond3/actions-checkout-pr@v1
+      # 最新コミットの取得 -> コメント: github actions の URL
+      - uses: actions/github-script@0.9.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const commitHash = `${{ fromJSON(steps.get-pr.outputs.result).head.sha }}`;
+            const substrCommitHash = commitHash.substr(0,7);
+
+            const output = `#### start docker build.... ${substrCommitHash}
+            CI URL: ${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}
+            `;
+
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+      - name: Configure AWS credentials from Test account
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-1
+
+
+      # - uses: actions/github-script@v3
+      #   id: get-pr2nd
+      #   with:
+      #     script: |
+      #       const request = {
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #         pull_number: context.issue.number
+      #       }
+      #       core.info(`Getting PR #${request.pull_number} from ${request.owner}/${request.repo}`)
+      #       try {
+      #         const result = await github.pulls.get(request)
+      #         return result.data
+      #       } catch (err) {
+      #         core.setFailed(`Request failed with error ${err}`)
+      #       }
+
+      # - uses: actions/checkout@v2
+      #   with:
+      #     repository: ${{ fromJSON(steps.get-pr2nd.outputs.result).head.repo.full_name }}
+      #     ref: ${{ fromJSON(steps.get-pr2nd.outputs.result).head.sha }} # or .head.ref for branch name
+      # -----------------------------
+      - uses: actions/github-script@0.9.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const commitHash = `${{ fromJSON(steps.get-pr2nd.outputs.result).head.sha }}`;
+            const substrCommitHash = commitHash.substr(0,7);
+            const output = `#### start terraform apply.... ${substrCommitHash}
+            CI URL: ${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}
+            `;
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            });
+      - name: Configure AWS credentials from Test account
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Terraform Format
+        id: fmt
+        run: terraform fmt -check -recursive
+        working-directory: ./terraform
+
+      - name: build python
+        run: |
+          bash build.bash
+          cd terraform/
+
+      - name: Terraform Init
+        id: init
+        run: terraform init
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color
+        env:
+          TF_VAR_G_SECRET: ${{ secrets.TF_VAR_G_SECRET }}
+          TF_VAR_CALENDAR_ID: ${{ secrets.TF_VAR_CALENDAR_ID }}
+          TF_VAR_LINE_BOT_CHANNEL_ACCESS_TOKEN: ${{ secrets.TF_VAR_LINE_BOT_CHANNEL_ACCESS_TOKEN }}
+          TF_VAR_LINE_BOT_CHANNEL_SECRET: ${{ secrets.TF_VAR_LINE_BOT_CHANNEL_SECRET }}
+          TF_VAR_RYO_UID: ${{ secrets.TF_VAR_RYO_UID }}
+        continue-on-error: true
+
+      - name: Terraform Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+      - name: Terraform Apply
+        id: apply
+        run: terraform apply -no-color -auto-approve
+        env:
+          TF_VAR_G_SECRET: ${{ secrets.TF_VAR_G_SECRET }}
+          TF_VAR_CALENDAR_ID: ${{ secrets.TF_VAR_CALENDAR_ID }}
+          TF_VAR_LINE_BOT_CHANNEL_ACCESS_TOKEN: ${{ secrets.TF_VAR_LINE_BOT_CHANNEL_ACCESS_TOKEN }}
+          TF_VAR_LINE_BOT_CHANNEL_SECRET: ${{ secrets.TF_VAR_LINE_BOT_CHANNEL_SECRET }}
+          TF_VAR_RYO_UID: ${{ secrets.TF_VAR_RYO_UID }}
+        continue-on-error: true
+
+      - uses: actions/github-script@0.9.0
+        env:
+          APPLY: ${{ steps.apply.outputs.stdout }}
+          APPLY_ERROR: ${{ steps.apply.outputs.stderr }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const commitHash = `${{ fromJSON(steps.get-pr2nd.outputs.result).head.sha }}`;
+            const substrCommitHash = commitHash.substr(0,7);
+            const output = `#### .deploy の結果を表示する。 ${substrCommitHash}
+            #### Terraform apply 📖\`${{ steps.apply.outcome }}\`
+
+            <details><summary>Show Apply Result</summary>
+
+            \`\`\`terraform
+            ${process.env.APPLY}
+            \`\`\`
+
+            </details>
+            
+            ${ process.env.APPLY_ERROR &&
+              `<details><summary>Error</summary>
+
+              \`\`\`terraform
+              ${process.env.APPLY_ERROR}
+              \`\`\`
+
+              </details>
+            `}`;
+
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+      - name: Terraform Apply Status
+        if: steps.apply.outcome == 'failure'
+        run: exit 1
