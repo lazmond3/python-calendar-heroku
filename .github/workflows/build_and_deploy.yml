@@ -9,8 +9,10 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.issue.pull_request != null && github.event.comment.body == '.deploy' }}
     steps:
-     # ここで checkout する。
-      - uses: lazmond3/actions-checkout-pr@v1
+      # ここで checkout する。
+      - uses: lazmond3/actions-checkout-pr@v1.3
+        id: get-pr
+
       # 最新コミットの取得 -> コメント: github actions の URL
       - uses: actions/github-script@0.9.0
         with:
@@ -37,51 +39,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-northeast-1
 
-
-      # - uses: actions/github-script@v3
-      #   id: get-pr2nd
-      #   with:
-      #     script: |
-      #       const request = {
-      #         owner: context.repo.owner,
-      #         repo: context.repo.repo,
-      #         pull_number: context.issue.number
-      #       }
-      #       core.info(`Getting PR #${request.pull_number} from ${request.owner}/${request.repo}`)
-      #       try {
-      #         const result = await github.pulls.get(request)
-      #         return result.data
-      #       } catch (err) {
-      #         core.setFailed(`Request failed with error ${err}`)
-      #       }
-
-      # - uses: actions/checkout@v2
-      #   with:
-      #     repository: ${{ fromJSON(steps.get-pr2nd.outputs.result).head.repo.full_name }}
-      #     ref: ${{ fromJSON(steps.get-pr2nd.outputs.result).head.sha }} # or .head.ref for branch name
-      # -----------------------------
-      - uses: actions/github-script@0.9.0
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const commitHash = `${{ fromJSON(steps.get-pr2nd.outputs.result).head.sha }}`;
-            const substrCommitHash = commitHash.substr(0,7);
-            const output = `#### start terraform apply.... ${substrCommitHash}
-            CI URL: ${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}
-            `;
-            github.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            });
-      - name: Configure AWS credentials from Test account
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-northeast-1
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
         with:
@@ -100,10 +57,12 @@ jobs:
       - name: Terraform Init
         id: init
         run: terraform init
+        working-directory: ./terraform
 
       - name: Terraform Plan
         id: plan
         run: terraform plan -no-color
+        working-directory: ./terraform
         env:
           TF_VAR_G_SECRET: ${{ secrets.TF_VAR_G_SECRET }}
           TF_VAR_CALENDAR_ID: ${{ secrets.TF_VAR_CALENDAR_ID }}
@@ -118,6 +77,7 @@ jobs:
 
       - name: Terraform Apply
         id: apply
+        working-directory: ./terraform
         run: terraform apply -no-color -auto-approve
         env:
           TF_VAR_G_SECRET: ${{ secrets.TF_VAR_G_SECRET }}
@@ -134,7 +94,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const commitHash = `${{ fromJSON(steps.get-pr2nd.outputs.result).head.sha }}`;
+            const commitHash = `${{ fromJSON(steps.get-pr.outputs.result).head.sha }}`;
             const substrCommitHash = commitHash.substr(0,7);
             const output = `#### .deploy の結果を表示する。 ${substrCommitHash}
             #### Terraform apply 📖\`${{ steps.apply.outcome }}\`
