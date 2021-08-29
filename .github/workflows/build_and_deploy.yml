@@ -13,23 +13,23 @@ jobs:
       - uses: lazmond3/actions-checkout-pr@v1.2
         id: get-pr
       # 最新コミットの取得 -> コメント: github actions の URL
-      - uses: actions/github-script@0.9.0
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const commitHash = `${{ fromJSON(steps.get-pr.outputs.result).head.sha }}`;
-            const substrCommitHash = commitHash.substr(0,7);
+      # - uses: actions/github-script@0.9.0
+      #   with:
+      #     github-token: ${{ secrets.GITHUB_TOKEN }}
+      #     script: |
+      #       const commitHash = `${{ fromJSON(steps.get-pr.outputs.result).head.sha }}`;
+      #       const substrCommitHash = commitHash.substr(0,7);
 
-            const output = `#### start docker build.... ${substrCommitHash}
-            CI URL: ${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}
-            `;
+      #       const output = `#### start docker build.... ${substrCommitHash}
+      #       CI URL: ${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}
+      #       `;
 
-            github.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })
+      #       github.issues.createComment({
+      #         issue_number: context.issue.number,
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #         body: output
+      #       })
 
       - name: Configure AWS credentials from Test account
         uses: aws-actions/configure-aws-credentials@v1
