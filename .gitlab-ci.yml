@@ -29,6 +29,7 @@ debugprint:
   script:
     - "echo HELLO: $HELLO"
 
+
 init:
   stage: prepare
   script:
