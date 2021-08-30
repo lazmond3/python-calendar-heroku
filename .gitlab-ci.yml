@@ -80,6 +80,5 @@ apply:
   dependencies:
     - pythonbuild
     - plan
-  when: manual
   only:
     - master
