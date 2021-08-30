@@ -27,6 +27,7 @@ stages:
 debugprint:
   stage: debugfirst
   script:
+    - "pwd"
     - "echo HELLO: $HELLO"
 
 
@@ -38,11 +39,13 @@ init:
 validate:
   stage: validate
   script:
+    - "pwd"
     - terraform validate
 
 plan:
   stage: build
   script:
+    - "pwd"
     - terraform plan
     - terraform plan-json
   artifacts:
