@@ -81,9 +81,6 @@ apply:
   environment:
     name: production
   script:
-    - cd ../
-    - sh build.bash
-    - cd terraform
     - gitlab-terraform apply
   dependencies:
     - pythonbuild
