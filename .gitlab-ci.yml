@@ -22,7 +22,7 @@ stages:
 init:
   stage: prepare
   script:
-    - gitlab-terraform init
+    - gitlab-terraform init -backend-config="access_key=$AWS_ACCESS_KEY_ID" -backend-config="secret_key=$AWS_SECRET_ACCESS_KEY"
 
 validate:
   stage: validate
