@@ -1,6 +1,9 @@
 default:
   # image: registry.gitlab.com/gitlab-org/terraform-images/stable:latest
-  image: hashicorp/terraform:latest
+  image: 
+    name: hashicorp/terraform:latest
+    entrypoint: [""]
+
 
   # cache:
   #   key: example-production
