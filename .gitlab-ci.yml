@@ -78,14 +78,12 @@ afterplan:
 
 apply:
   stage: deploy
-  # environment:
-  #   name: production
+  environment:
+    name: production
   script:
-    - ls ..
-    - echo build があるか確認
-    - ls ../build
-    - pwd
-    - ls
+    - cd ../
+    - sh build.bash
+    - cd terraform
     - gitlab-terraform apply
   dependencies:
     - pythonbuild
