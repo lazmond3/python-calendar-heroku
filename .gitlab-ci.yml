@@ -48,7 +48,7 @@ pythonbuild:
   stage: pythonbuild
   script:
     - cd ..
-    - bash build.bash
+    - sh build.bash
   artifacts:
     paths:
       - ./build
