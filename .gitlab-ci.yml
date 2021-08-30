@@ -18,10 +18,16 @@ before_script:
   - cd terraform
 
 stages:
+  - debugfirst
   - prepare
   - validate
   - build
   - deploy
+
+debugprint:
+  stage: debugfirst
+  script:
+    - "echo HELLO: $HELLO"
 
 init:
   stage: prepare
