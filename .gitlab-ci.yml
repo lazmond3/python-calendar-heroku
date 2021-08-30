@@ -71,6 +71,9 @@ apply:
   environment:
     name: production
   script:
+    - ls ..
+    - echo build があるか確認
+    - ls ../build
     - pwd
     - ls
     - gitlab-terraform apply
