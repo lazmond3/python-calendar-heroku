@@ -5,7 +5,6 @@ default:
     # name: hashicorp/terraform:latest
     entrypoint: [""]
 
-
   cache:
     key: example-production
     paths:
