@@ -32,11 +32,18 @@ data "archive_file" "layer_zip" {
   type        = "zip"
   source_dir  = "../build/layer"
   output_path = "lambda/layer.zip"
+  depends_on = [
+    null_resource.main
+  ]
+  
 }
 data "archive_file" "function_zip" {
   type        = "zip"
   source_dir  = "../build/function"
   output_path = "lambda/function.zip"
+  depends_on = [
+    null_resource.main
+  ]
 }
 
 # Layer
@@ -72,4 +79,8 @@ resource "aws_lambda_permission" "allow_cloudwatch" {
   function_name = aws_lambda_function.pylib_google.function_name
   principal     = "events.amazonaws.com"
   source_arn    = module.cloudwatch_evnet.rule_arn
+}
+
+resource null_resource main {
+
 }
