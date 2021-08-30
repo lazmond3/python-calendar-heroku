@@ -1,7 +1,8 @@
 default:
   # image: registry.gitlab.com/gitlab-org/terraform-images/stable:latest
   image: 
-    name: hashicorp/terraform:latest
+    name: registry.gitlab.com/gitlab-org/terraform-images/stable:latest
+    # name: hashicorp/terraform:latest
     entrypoint: [""]
 
 
@@ -34,20 +35,20 @@ debugprint:
 init:
   stage: prepare
   script:
-    - terraform init -backend-config="access_key=$AWS_ACCESS_KEY_ID" -backend-config="secret_key=$AWS_SECRET_ACCESS_KEY"
+    - gitlab-terraform init -backend-config="access_key=$AWS_ACCESS_KEY_ID" -backend-config="secret_key=$AWS_SECRET_ACCESS_KEY"
 
 validate:
   stage: validate
   script:
     - "pwd"
-    - terraform validate
+    - gitlab-terraform validate
 
 plan:
   stage: build
   script:
     - "pwd"
-    - terraform plan
-    - terraform plan-json
+    - gitlab-terraform plan
+    - gitlab-terraform plan-json
   artifacts:
     name: plan
     paths:
@@ -60,7 +61,7 @@ apply:
   environment:
     name: production
   script:
-    - terraform apply
+    - gitlab-terraform apply
   dependencies:
     - plan
   when: manual
