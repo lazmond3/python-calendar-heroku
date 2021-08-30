@@ -5,10 +5,10 @@ default:
     entrypoint: [""]
 
 
-  # cache:
-  #   key: example-production
-  #   paths:
-  #     - ${TF_ROOT}/.terraform
+  cache:
+    key: example-production
+    paths:
+      - ${TF_ROOT}/.terraform
 
 variables:
   TF_ROOT: ${CI_PROJECT_DIR}/terraform
