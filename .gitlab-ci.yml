@@ -24,6 +24,7 @@ stages:
   - validate
   - pythonbuild
   - build
+  - afterplan
   - deploy
 
 debugprint:
@@ -65,6 +66,15 @@ plan:
       - ${TF_ROOT}/plan.cache
     reports:
       terraform: ${TF_ROOT}/plan.json
+
+afterplan:
+  stage: afterplan
+  script:
+    - ls ..
+    - echo build があるか確認
+    - ls ../build
+    - pwd
+    - ls
 
 apply:
   stage: deploy
