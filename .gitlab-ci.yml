@@ -1,0 +1,79 @@
+default:
+  # image: registry.gitlab.com/gitlab-org/terraform-images/stable:latest
+  image: 
+    # name: registry.gitlab.com/gitlab-org/terraform-images/stable:latest
+    name: moikilo00/terraform-python:latest
+    # name: hashicorp/terraform:latest
+    entrypoint: [""]
+
+  cache:
+    key: example-production
+    paths:
+      - ${TF_ROOT}/.terraform
+
+variables:
+  TF_ROOT: ${CI_PROJECT_DIR}/terraform
+  TF_ADDRESS: ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/terraform
+
+before_script:
+  - cd terraform
+
+stages:
+  - debugfirst
+  - prepare
+  - validate
+  - pythonbuild
+  - build
+  - deploy
+
+debugprint:
+  stage: debugfirst
+  script:
+    - "pwd"
+    - "echo HELLO: $HELLO"
+
+
+init:
+  stage: prepare
+  script:
+    - gitlab-terraform init -backend-config="access_key=$AWS_ACCESS_KEY_ID" -backend-config="secret_key=$AWS_SECRET_ACCESS_KEY"
+
+validate:
+  stage: validate
+  script:
+    - "pwd"
+    - gitlab-terraform validate
+
+pythonbuild:
+  stage: pythonbuild
+  script:
+    - cd ..
+    - sh build.bash
+  artifacts:
+    paths:
+      - ./build
+
+plan:
+  stage: build
+  script:
+    - "pwd"
+    - gitlab-terraform plan
+    - gitlab-terraform plan-json
+  artifacts:
+    name: plan
+    paths:
+      - ${TF_ROOT}/plan.cache
+    reports:
+      terraform: ${TF_ROOT}/plan.json
+
+apply:
+  stage: deploy
+  environment:
+    name: production
+  script:
+    - gitlab-terraform apply
+  dependencies:
+    - plan
+  when: manual
+  only:
+    - master
