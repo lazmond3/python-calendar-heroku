@@ -7,4 +7,4 @@
 │   43: resource "aws_lambda_layer_version" "lambda_layer" {
 
 
-updated gitlab ci yml
+updated gitlab ci yml 
