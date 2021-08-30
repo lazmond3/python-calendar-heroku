@@ -6,3 +6,5 @@
 │   on lambda.tf line 43, in resource "aws_lambda_layer_version" "lambda_layer":
 │   43: resource "aws_lambda_layer_version" "lambda_layer" {
 
+
+updated gitlab ci yml
