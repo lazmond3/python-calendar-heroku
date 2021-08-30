@@ -71,6 +71,8 @@ apply:
   environment:
     name: production
   script:
+    - pwd
+    - ls
     - gitlab-terraform apply
   dependencies:
     - plan
