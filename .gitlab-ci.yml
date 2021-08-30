@@ -78,6 +78,7 @@ apply:
     - ls
     - gitlab-terraform apply
   dependencies:
+    - pythonbuild
     - plan
   when: manual
   only:
