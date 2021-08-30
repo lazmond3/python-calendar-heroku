@@ -1,7 +1,8 @@
 default:
   # image: registry.gitlab.com/gitlab-org/terraform-images/stable:latest
   image: 
-    name: registry.gitlab.com/gitlab-org/terraform-images/stable:latest
+    # name: registry.gitlab.com/gitlab-org/terraform-images/stable:latest
+    name: moikilo00/terraform-python:latest
     # name: hashicorp/terraform:latest
     entrypoint: [""]
 
@@ -21,6 +22,7 @@ stages:
   - debugfirst
   - prepare
   - validate
+  - pythonbuild
   - build
   - deploy
 
@@ -41,6 +43,15 @@ validate:
   script:
     - "pwd"
     - gitlab-terraform validate
+
+pythonbuild:
+  stage: pythonbuild
+  script:
+    - cd ..
+    - bash build.bash
+  artifacts:
+    paths:
+      - ./build
 
 plan:
   stage: build
